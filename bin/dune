@@ -1,0 +1,5 @@
+(executable
+ (public_name Lang)
+ (name main)
+ (modules main)
+ (libraries Lang))
