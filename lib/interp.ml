@@ -9,7 +9,8 @@ let rec simplify_expr (expr : expr) : int =
     match op with
     | Add -> simplify_expr expr1 + simplify_expr expr2
     | Sub -> simplify_expr expr1 - simplify_expr expr2
-    | Mult -> simplify_expr expr1 * simplify_expr expr2 in
+    | Mult -> simplify_expr expr1 * simplify_expr expr2
+    | Eq -> if simplify_expr expr1 = simplify_expr expr2 then 1 else 0 in
 
   match expr with
   | Binop (op, expr1, expr2) -> match_op op expr1 expr2
@@ -17,7 +18,7 @@ let rec simplify_expr (expr : expr) : int =
 
 let rec simplify_cf (cf : cf) : int =
   match cf with
-  | If (cond, expr1, expr2) -> if simplify_expr cond > 0 then (simplify_expr expr1) else (simplify_expr expr2)
+  | If (cond, expr1, expr2) -> if simplify_expr cond > 0 then (simplify_cf expr1) else (simplify_cf expr2)
   | Nop expr -> simplify_expr expr
 
 let read str =

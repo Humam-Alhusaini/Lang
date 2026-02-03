@@ -52,9 +52,10 @@ and op =
   | Add
   | Sub
   | Mult
+  | Eq
 
 and cf = 
-  | If of expr * expr * expr
+  | If of expr * cf * cf
   | Nop of expr
 
  let match_num n =
@@ -69,6 +70,7 @@ and cf =
    | (MULT, _) -> Mult
    | (PLUS, _) -> Add
    | (SUB, _) -> Sub
+   | (EQ, _) -> Eq
    | _ -> Parsing_error ("Expected operator", op) |> raise;;
 
 class parse (tokens : token list) = object (self)
@@ -109,8 +111,8 @@ class parse (tokens : token list) = object (self)
   method parse_cf : cf =  
     match toks with
     | (IF, _) :: _ -> self#shift (); let cond = self#parse_expr THEN in
-                                     let expr1 = self#parse_expr ELSE in
-                                     let expr2 = self#parse_expr EOF in
+                                     let expr1 = Nop (self#parse_expr ELSE) in
+                                     let expr2 = Nop (self#parse_expr EOF) in
                                      If (cond, expr1, expr2)
     | _ -> Nop (self#parse_expr EOF)
 

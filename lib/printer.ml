@@ -46,7 +46,8 @@ let fop op =
   match op with
   | Add -> "+"
   | Sub -> "-"
-  | Mult -> "*";;
+  | Mult -> "*"
+  | Eq -> "=";;
 
 let rec fexpr expr = 
   match expr with 
@@ -54,9 +55,9 @@ let rec fexpr expr =
   | Binop (op, expr1, expr2) -> 
       sprintf "(%s %s %s)" (fexpr expr1) (fop op) (fexpr expr2)
 
-let fcf cf = 
+let rec fcf cf = 
   match cf with 
-  | If (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fexpr expr1) (fexpr expr2)
+  | If (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fcf expr1) (fcf expr2)
   | Nop expr -> sprintf "%s" (fexpr expr)
 
 let print (func : 'a -> string) (obj : 'a) =
