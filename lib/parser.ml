@@ -28,6 +28,7 @@ let format_tok (tok : Tokens.t) =
   | COMMA -> "COMMA"
   | PERIOD -> "PERIOD"
   | NAT -> "NAT"
+  | THEN -> "THEN"
   | EOF -> "EOF";;
 
 let format_pos (pos : position) : string = 
@@ -52,9 +53,15 @@ and op =
   | Sub
   | Mult
 
+and cf = 
+  | If of expr * expr * expr
+  | Nop of expr
+
  let match_num n =
    match n with
    | (NUM y, _) -> Num y
+   | (TRUE, _) -> Num 1
+   | (FALSE, _) -> Num 0
    | _ -> Parsing_error ("Expected num", n) |> raise;;
 
  let match_op op = 
@@ -64,7 +71,7 @@ and op =
    | (SUB, _) -> Sub
    | _ -> Parsing_error ("Expected operator", op) |> raise;;
 
-class parse_exp (tokens : token list) = object (self)
+class parse (tokens : token list) = object (self)
   
   val mutable toks = tokens
 
@@ -78,20 +85,32 @@ class parse_exp (tokens : token list) = object (self)
       if num > 0 then begin
         self#shift (); loop (num-1) end
       else () in loop num
+  
+  
 
-  method parse_expr : expr = 
+  method parse_expr (endtok : Tokens.t) : expr = 
     
     let rec parse_binop (start : expr) : expr =
-      match toks with
-      | op :: num :: _ -> self#shift_n 2; Binop(match_op op, start, match_num num) |> parse_binop
-      | [(EOF, _)] -> start
-      | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise
-      | [] -> Fatal "Can't find EOF token" |> raise
+      match toks with 
+      | [] -> Fatal "Empty" |> raise
+      | _ -> (let (ftok, _) = List.hd toks in
+                  if ftok = endtok then let _ = self#shift () in start else let _ = Printf.printf "Ftok: %s, Endtok: %s" (format_tok ftok) (format_tok endtok) in
+                  match toks with
+                  | op :: num :: _ -> self#shift_n 2; Binop(match_op op, start, match_num num) |> parse_binop
+                  | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise
+                  | [] -> Fatal "Can't find EOF token" |> raise)
        in
     
     match toks with
-    | (NUM y, _) :: _ -> self#shift (); parse_binop (Num y) 
-    | hd :: _ -> Parsing_error ("Expected num", hd) |> raise
+    | hd :: _ -> self#shift (); (match_num hd) |> parse_binop 
     | [] -> Fatal "No tokens to parse" |> raise
+
+  method parse_cf : cf =  
+    match toks with
+    | (IF, _) :: _ -> self#shift (); let cond = self#parse_expr THEN in
+                                     let expr1 = self#parse_expr ELSE in
+                                     let expr2 = self#parse_expr EOF in
+                                     If (cond, expr1, expr2)
+    | _ -> Nop (self#parse_expr EOF)
 
 end

@@ -27,6 +27,7 @@ let format_tok (tok : Tokens.t) =
   | COMMA -> "COMMA"
   | PERIOD -> "PERIOD"
   | NAT -> "NAT"
+  | THEN -> "THEN"
   | EOF -> "EOF";;
 
 let rec toks_to_tokens toks : Tokens.t list =
@@ -52,6 +53,11 @@ let rec fexpr expr =
   | Num n -> sprintf "%d" n
   | Binop (op, expr1, expr2) -> 
       sprintf "(%s %s %s)" (fexpr expr1) (fop op) (fexpr expr2)
+
+let fcf cf = 
+  match cf with 
+  | If (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fexpr expr1) (fexpr expr2)
+  | Nop expr -> sprintf "%s" (fexpr expr)
 
 let print (func : 'a -> string) (obj : 'a) =
   let str = func obj in

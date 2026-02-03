@@ -38,6 +38,7 @@ let string_of_chars chars =
 let string_to_tok str : Tokens.t = 
   match str with
   | "if" -> IF
+  | "then" -> THEN
   | "else" -> ELSE
   | "true" -> TRUE
   | "false" -> FALSE

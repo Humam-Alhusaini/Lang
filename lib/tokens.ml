@@ -24,3 +24,4 @@ type t =
   | FALSE
   | NAT
   | EOF
+  | THEN
