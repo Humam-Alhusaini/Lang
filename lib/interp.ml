@@ -15,13 +15,19 @@ let rec simplify_expr (expr : expr) : int =
   | Binop (op, expr1, expr2) -> match_op op expr1 expr2
   | Num y -> y;;
 
+let rec simplify_cf (cf : cf) : int =
+  match cf with
+  | If (cond, expr1, expr2) -> if simplify_expr cond > 0 then (simplify_expr expr1) else (simplify_expr expr2)
+  | Nop expr -> simplify_expr expr
+
 let read str =
   try
     let lex = new lexer str in
       let tokens = lex#tokenize [] in 
         let parse = new parse tokens in
           let ast = parse#parse_cf in 
-            printf "\n%s\n" (fcf ast) 
+            let newast = Num (simplify_cf ast) in
+            printf "\n%s\n" (fexpr newast) 
   with 
   | Lexing_error (err, toks, pos) -> 
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;

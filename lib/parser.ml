@@ -94,11 +94,12 @@ class parse (tokens : token list) = object (self)
       match toks with 
       | [] -> Fatal "Empty" |> raise
       | _ -> (let (ftok, _) = List.hd toks in
-                  if ftok = endtok then let _ = self#shift () in start else let _ = Printf.printf "Ftok: %s, Endtok: %s" (format_tok ftok) (format_tok endtok) in
-                  match toks with
-                  | op :: num :: _ -> self#shift_n 2; Binop(match_op op, start, match_num num) |> parse_binop
-                  | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise
-                  | [] -> Fatal "Can't find EOF token" |> raise)
+                  if ftok = endtok then 
+                    let _ = self#shift () in start else 
+                    match toks with
+                    | op :: num :: _ -> self#shift_n 2; Binop(match_op op, start, match_num num) |> parse_binop
+                    | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise
+                    | [] -> Fatal "Can't find EOF token" |> raise)
        in
     
     match toks with
