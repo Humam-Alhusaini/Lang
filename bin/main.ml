@@ -17,7 +17,8 @@ let interp str =
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;
       print_string "Printing retrieved tokens...\n\n";
       print_tokens toks
-  | Parsing_error (err, tok) -> printf "\n"; printf "%s, got %s\n" err (format_token tok);;
+  | Parsing_error (err, tok) -> printf "\n"; printf "PARSING ERROR: %s, got %s\n" err (format_token tok)
+  | Fatal err -> printf "\n"; printf "CONTACT MAINTAINERS: %s\n" err;;
 
 let rec repl () =
   print_string ">>> ";

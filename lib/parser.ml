@@ -70,7 +70,7 @@ class parse_exp (tokens : token list) = object (self)
 
   method shift () =
    match toks with
-   | [] -> Fatal "FATAL ERROR" |> raise
+   | [] -> Fatal "No more tokens" |> raise
    | _ :: ls -> toks <- ls
 
   method shift_n num =
@@ -84,13 +84,14 @@ class parse_exp (tokens : token list) = object (self)
     let rec parse_binop (start : expr) : expr =
       match toks with
       | op :: num :: _ -> self#shift_n 2; Binop(match_op op, start, match_num num) |> parse_binop
-      | [] -> start
+      | [(EOF, _)] -> start
       | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise
+      | [] -> Fatal "Can't find EOF token" |> raise
        in
     
     match toks with
     | (NUM y, _) :: _ -> self#shift (); parse_binop (Num y) 
     | hd :: _ -> Parsing_error ("Expected num", hd) |> raise
-    | [] -> Fatal "Where the helly are the tokens" |> raise
+    | [] -> Fatal "No tokens to parse" |> raise
 
 end
