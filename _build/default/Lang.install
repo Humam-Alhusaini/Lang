@@ -1,8 +1,0 @@
-lib: [
-  "_build/install/default/lib/Lang/META"
-  "_build/install/default/lib/Lang/dune-package"
-  "_build/install/default/lib/Lang/opam"
-]
-bin: [
-  "_build/install/default/bin/Lang"
-]

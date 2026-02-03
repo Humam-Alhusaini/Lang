@@ -1,5 +1,6 @@
 
 open Printf
+open Parser
 
 let format_tok (tok : Tokens.t) = 
   match tok with
@@ -40,3 +41,18 @@ let rec print_tokens toks : unit =
       format_tok hd |> printf "%s\n";
     print_tokens tl;;
 
+let fop op =
+  match op with
+  | Add -> "+"
+  | Sub -> "-"
+  | Mult -> "*";;
+
+let rec fexpr expr = 
+  match expr with 
+  | Num n -> sprintf "%d" n
+  | Binop (op, expr1, expr2) -> 
+      sprintf "(%s %s %s)" (fexpr expr1) (fop op) (fexpr expr2)
+
+let print (func : 'a -> string) (obj : 'a) =
+  let str = func obj in
+  printf "%s\n" str;;
