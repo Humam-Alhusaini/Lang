@@ -26,7 +26,7 @@ let read str =
     let lex = new lexer str in
       let tokens = lex#tokenize [] in 
         let parse = new parse tokens in
-          let ast = parse#parse_cf in 
+          let ast = parse#parse_cf EOF in 
             let newast = Num (simplify_cf ast) in
             printf "\n%s\n" (fexpr newast) 
   with 

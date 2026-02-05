@@ -95,25 +95,31 @@ class parse (tokens : token list) = object (self)
     let rec parse_binop (start : expr) : expr =
       match toks with 
       | [] -> Fatal "Empty" |> raise
-      | _ -> (let (ftok, _) = List.hd toks in
+      | hd :: _ -> (let (ftok, _) = hd in
                   if ftok = endtok then 
                     let _ = self#shift () in start else 
                     match toks with
                     | op :: num :: _ -> self#shift_n 2; Binop(match_op op, start, match_num num) |> parse_binop
                     | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise
-                    | [] -> Fatal "Can't find EOF token" |> raise)
+                    | [] -> Fatal "Can't find end token" |> raise)
        in
     
     match toks with
-    | hd :: _ -> self#shift (); (match_num hd) |> parse_binop 
     | [] -> Fatal "No tokens to parse" |> raise
+    | num :: tok :: _ -> self#shift ();
+                  let (ftok, _) = tok in 
+                  if ftok = endtok then 
+                    let _ = self#shift () in (match_num num)
+                  else
+                    let _ = self#shift () in match_num num |> parse_binop
+    | hd :: _ -> Parsing_error ("Expected token after number, either an semicolon or a binop", hd) |> raise
 
-  method parse_cf : cf =  
+  method parse_cf (endtok : Tokens.t) : cf =  
     match toks with
     | (IF, _) :: _ -> self#shift (); let cond = self#parse_expr THEN in
-                                     let expr1 = Nop (self#parse_expr ELSE) in
-                                     let expr2 = Nop (self#parse_expr EOF) in
-                                     If (cond, expr1, expr2)
-    | _ -> Nop (self#parse_expr EOF)
+                      let expr1 = self#parse_cf ELSE in
+                      let expr2 = self#parse_cf SEMICOLON in
+                      If (cond, expr1, expr2)
+    | _ -> Nop (self#parse_expr endtok)
 
 end
