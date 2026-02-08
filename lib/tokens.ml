@@ -26,3 +26,4 @@ type t =
   | EOF
   | THEN
   | ELIF
+  | DEF

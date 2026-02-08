@@ -43,6 +43,7 @@ let string_to_tok str : Tokens.t =
   | "true" -> TRUE
   | "false" -> FALSE
   | "nat" -> NAT
+  | "def" -> DEF
   | "elif" -> ELIF
   | _ -> VAR str;;
 

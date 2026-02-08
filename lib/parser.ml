@@ -30,6 +30,7 @@ let format_tok (tok : Tokens.t) =
   | NAT -> "NAT"
   | THEN -> "THEN"
   | EOF -> "EOF"
+  | DEF -> "DEF"
   | ELIF -> "ELIF";;
 
 let rec toks_to_tokens toks : Tokens.t list =
@@ -71,6 +72,8 @@ and cf =
   | If_Else of expr * cf * cf
   | If of expr * cf
   | Nop of expr
+
+and def = string * expr
 
  let match_num n =
    match n with
@@ -142,5 +145,10 @@ class parse (tokens : token list) = object (self)
                                               let _ = self#shift () in If_Else (cond, expr1, expr2) else 
                                               Parsing_error ("Expected token to end if statement", (ftok, p)) |> raise)
     | _ -> Nop (self#parse_expr endtok)
+
+  method parse_def : def = 
+    match toks with
+    | (DEF, _) :: (VAR str, _) :: (EQ, _) :: _ -> self#shift_n 3; let expr = self#parse_expr SEMICOLON in (str, expr)
+    | _ -> Fatal "Issues" |> raise
 
 end
