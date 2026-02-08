@@ -30,18 +30,6 @@ let format_tok (tok : Tokens.t) =
   | THEN -> "THEN"
   | EOF -> "EOF";;
 
-let rec toks_to_tokens toks : Tokens.t list =
-  match toks with
-  | [] -> []
-  | (token, _) :: tl -> token :: toks_to_tokens tl;;
-
-let rec print_tokens toks : unit =
-  match toks with
-  | [] -> ()
-  | hd :: tl ->
-      format_tok hd |> printf "%s\n";
-    print_tokens tl;;
-
 let fop op =
   match op with
   | Add -> "+"
@@ -57,7 +45,7 @@ let rec fexpr expr =
 
 let rec fcf cf = 
   match cf with 
-  | If (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fcf expr1) (fcf expr2)
+  | If_Else (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fcf expr1) (fcf expr2)
   | Nop expr -> sprintf "%s" (fexpr expr)
 
 let print (func : 'a -> string) (obj : 'a) =
