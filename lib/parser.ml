@@ -135,7 +135,11 @@ class parse (tokens : token list) = object (self)
     | (IF, _) :: _ -> self#shift (); let cond = self#parse_expr THEN in
                       let expr1 = self#parse_nested_cf ELSE in
                       let expr2 = self#parse_nested_cf SEMICOLON in
-                      If_Else (cond, expr1, expr2)
+                          (match toks with
+                          | [] -> Fatal "No tokens to parse" |> raise
+                          | (ftok, p) :: _ -> if endtok = ftok then
+                                              let _ = self#shift () in If_Else (cond, expr1, expr2) else 
+                                              Parsing_error ("Expected token to end if statement", (ftok, p)) |> raise)
     | _ -> Nop (self#parse_expr endtok)
 
 end
