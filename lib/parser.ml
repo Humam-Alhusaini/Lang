@@ -98,22 +98,17 @@ class parse (tokens : token list) = object (self)
     let rec loop num =
       if num > 0 then begin
         self#shift (); loop (num-1) end
-      else () in loop num
-  
-  
+      else () in loop num 
 
   method parse_expr (endtok : Tokens.t) : expr = 
     
-    let rec parse_binop (start : expr) : expr =
-      match toks with 
-      | [] -> Fatal "Empty" |> raise
-      | hd :: _ -> (let (ftok, _) = hd in
-                  if ftok = endtok then 
-                    let _ = self#shift () in start else 
-                    match toks with
-                    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: _ -> self#shift_n 2; Binop(match_op (op, p), start, match_num num) |> parse_binop
-                    | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise
-                    | [] -> Fatal "Can't find end token" |> raise)
+    let rec parse_binop (curr : expr) : expr =
+      match toks with
+      | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: _ -> self#shift_n 2; Binop(match_op (op, p), curr, match_num num) |> parse_binop
+      | [] -> Fatal "Can't find end token" |> raise
+      | (ftok, pos) :: _ -> (if ftok = endtok then
+                    let _ = self#shift () in curr else 
+                     Parsing_error ("Expected expression to either end or continue", (ftok, pos)) |> raise)
        in
     
     match toks with
