@@ -29,7 +29,8 @@ let format_tok (tok : Tokens.t) =
   | PERIOD -> "PERIOD"
   | NAT -> "NAT"
   | THEN -> "THEN"
-  | EOF -> "EOF";;
+  | EOF -> "EOF"
+  | ELIF -> "ELIF";;
 
 let rec toks_to_tokens toks : Tokens.t list =
   match toks with
@@ -68,6 +69,7 @@ and op =
 
 and cf = 
   | If_Else of expr * cf * cf
+  | If of expr * cf
   | Nop of expr
 
  let match_num n =
@@ -106,10 +108,8 @@ class parse (tokens : token list) = object (self)
       match toks with
       | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: _ -> self#shift_n 2; Binop(match_op (op, p), curr, match_num num) |> parse_binop
       | [] -> Fatal "Can't find end token" |> raise
-      | (ftok, pos) :: _ -> (if ftok = endtok then
-                    let _ = self#shift () in curr else 
-                     Parsing_error ("Expected expression to either end or continue", (ftok, pos)) |> raise)
-       in
+      | (ftok, pos) :: _ -> (if ftok = endtok then let _ = self#shift () in curr else 
+                     Parsing_error ("Expected expression to either end or continue", (ftok, pos)) |> raise) in
     
     match toks with
     | [] -> Fatal "No tokens to parse" |> raise
@@ -120,14 +120,20 @@ class parse (tokens : token list) = object (self)
     | (LBRACE, _) :: _ -> self#shift (); let cf = self#parse_cf RBRACE in
                           (match toks with
                           | [] -> Fatal "No tokens to parse" |> raise
-                          | (ftok, p) :: _ -> if endtok = ftok then
-                                              let _ = self#shift () in cf else 
+                          | (ftok, p) :: _ -> if endtok = ftok then let _ = self#shift () in cf else 
                                               Parsing_error ("Expected token to end if statement", (ftok, p)) |> raise)
     | _ -> Nop (self#parse_expr endtok)
 
   method parse_cf (endtok : Tokens.t) : cf =  
     match toks with
     | (IF, _) :: _ -> self#shift (); let cond = self#parse_expr THEN in
+                      let expr = self#parse_nested_cf SEMICOLON in
+                          (match toks with
+                          | [] -> Fatal "No tokens to parse" |> raise
+                          | (ftok, p) :: _ -> if endtok = ftok then
+                                              let _ = self#shift () in If (cond, expr) else 
+                                              Parsing_error ("Expected token to end if statement", (ftok, p)) |> raise)
+    | (ELIF, _) :: _ -> self#shift (); let cond = self#parse_expr THEN in
                       let expr1 = self#parse_nested_cf ELSE in
                       let expr2 = self#parse_nested_cf SEMICOLON in
                           (match toks with

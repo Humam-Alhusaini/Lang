@@ -19,6 +19,7 @@ let rec simplify_expr (expr : expr) : int =
 let rec simplify_cf (cf : cf) : int =
   match cf with
   | If_Else (cond, expr1, expr2) -> if simplify_expr cond > 0 then (simplify_cf expr1) else (simplify_cf expr2)
+  | If (cond, expr) -> if simplify_expr cond > 0 then (simplify_cf expr) else 0
   | Nop expr -> simplify_expr expr
 
 let read str =

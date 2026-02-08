@@ -28,7 +28,8 @@ let format_tok (tok : Tokens.t) =
   | PERIOD -> "PERIOD"
   | NAT -> "NAT"
   | THEN -> "THEN"
-  | EOF -> "EOF";;
+  | EOF -> "EOF"
+  | ELIF -> "ELIF";;
 
 let fop op =
   match op with
@@ -46,6 +47,7 @@ let rec fexpr expr =
 let rec fcf cf = 
   match cf with 
   | If_Else (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fcf expr1) (fcf expr2)
+  | If (cond, expr) -> sprintf "If %s then %s" (fexpr cond) (fcf expr)
   | Nop expr -> sprintf "%s" (fexpr expr)
 
 let print (func : 'a -> string) (obj : 'a) =

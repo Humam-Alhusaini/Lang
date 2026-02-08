@@ -25,3 +25,4 @@ type t =
   | NAT
   | EOF
   | THEN
+  | ELIF
