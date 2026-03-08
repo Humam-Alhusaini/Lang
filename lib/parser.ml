@@ -61,6 +61,7 @@ exception Fatal of string
 type expr = 
   | Num of int
   | Binop of op * expr * expr
+  | Var of string
 
 and op = 
   | Add
@@ -75,11 +76,17 @@ and cf =
 
 and def = string * expr
 
+and ast =
+  | Def of def
+  | Expr of expr
+  | Cf of cf
+
  let match_num n =
    match n with
    | (NUM y, _) -> Num y
    | (TRUE, _) -> Num 1
    | (FALSE, _) -> Num 0
+   | (VAR y, _) -> Var y
    | _ -> Parsing_error ("Expected num", n) |> raise;;
 
  let match_op op = 
@@ -150,5 +157,13 @@ class parse (tokens : token list) = object (self)
     match toks with
     | (DEF, _) :: (VAR str, _) :: (EQ, _) :: _ -> self#shift_n 3; let expr = self#parse_expr SEMICOLON in (str, expr)
     | _ -> Fatal "Issues" |> raise
+
+  method parse : ast =
+    match toks with
+    | (DEF, _) :: _ -> Def self#parse_def
+    | (IF, _) :: _ | (ELIF, _) :: _ -> Cf (self#parse_cf EOF)
+    | (NUM _, _) :: _ -> Expr (self#parse_expr EOF)
+    | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
+    | [] -> Fatal "Nothing here! Contact maintainers!" |> raise
 
 end
