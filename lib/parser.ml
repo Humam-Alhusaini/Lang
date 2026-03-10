@@ -162,7 +162,7 @@ class parse (tokens : token list) = object (self)
     match toks with
     | (DEF, _) :: _ -> Def self#parse_def
     | (IF, _) :: _ | (ELIF, _) :: _ -> Cf (self#parse_cf EOF)
-    | (NUM _, _) :: _ -> Expr (self#parse_expr EOF)
+    | (NUM _, _) :: _ | (VAR _, _) :: _ -> Expr (self#parse_expr EOF)
     | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
     | [] -> Fatal "Nothing here! Contact maintainers!" |> raise
 

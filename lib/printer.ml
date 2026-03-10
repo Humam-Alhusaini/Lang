@@ -1,6 +1,7 @@
 
 open Printf
 open Parser
+open Ctx
 
 let fop op =
   match op with
@@ -21,6 +22,11 @@ let rec fcf cf =
   | If_Else (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fcf expr1) (fcf expr2)
   | If (cond, expr) -> sprintf "If %s then %s" (fexpr cond) (fcf expr)
   | Nop expr -> sprintf "%s" (fexpr expr)
+
+let rec fmap (map : expr_map) : string =
+  match map with 
+  | Empty -> ""
+  | Elem (key, expr, map') -> sprintf "%s -> %s\n%s" key (fexpr expr) (fmap map');;
 
 let rec fdef ((name, expr) : def) = 
   sprintf "Def %s = %s" name (fexpr expr)
