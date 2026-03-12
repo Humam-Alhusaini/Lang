@@ -10,10 +10,15 @@ type expr_map =
 let rec find (key : string) (map : expr_map) : expr =
   match map with 
   | Empty -> Map_error key |> raise
-  | Elem (str, expr, map') -> if str = key then expr else find key map' 
+  | Elem (str, expr, map') -> if str = key then expr else find key map';;
 
 let rec remove (key : string) (map: expr_map) : expr_map =
   match map with 
   | Empty -> Map_error key |> raise
-  | Elem (str, expr, map') -> if str = key then map' else Elem (str, expr, remove key map')
+  | Elem (str, expr, map') -> if str = key then map' else Elem (str, expr, remove key map');;
 
+let rec add (name: string) (valu : expr) (map : expr_map) : expr_map = 
+  match map with 
+  | Empty -> Elem (name, valu, map)
+  | Elem (str, expr, map') -> if str = name then Elem (str, valu, map') else Elem (str, expr, add name valu map');;
+  

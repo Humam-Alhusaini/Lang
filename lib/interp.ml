@@ -30,8 +30,7 @@ let do_stuff (ctx : expr_map) (ast : ast) : (expr_map)  =
   | Cf cf -> Num (simplify_cf ctx cf) |> print fexpr; ctx
   | Def (str, expr) ->
             let newexpr = Num (simplify_expr ctx expr) in
-              let _ = print fdef (str, newexpr) in
-                let newctx = Elem (str, newexpr, ctx) in newctx
+                add str newexpr ctx
 
 let read str (ctx : expr_map) : expr_map =
   try
@@ -46,5 +45,6 @@ let read str (ctx : expr_map) : expr_map =
       print_string "Printing retrieved tokens...\n\n";
       print_tokens toks; ctx
   | Parsing_error (err, tok) -> printf "\n"; printf "PARSING ERROR: %s, got %s\n" err (format_token tok); ctx
+  | Map_error err -> printf "\n"; printf "Value %s does not exist in context\n" err; ctx
   | Fatal err -> printf "\n"; printf "CONTACT MAINTAINERS: %s\n" err; ctx;;
 
