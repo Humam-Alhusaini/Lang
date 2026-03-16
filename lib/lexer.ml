@@ -45,6 +45,7 @@ let string_to_tok str : Tokens.t =
   | "nat" -> NAT
   | "def" -> DEF
   | "elif" -> ELIF
+  | "return" -> RETURN
   | _ -> VAR str;;
 
 class cursor_tracker txt =

@@ -17,12 +17,6 @@ let rec fexpr expr =
       sprintf "(%s %s %s)" (fexpr expr1) (fop op) (fexpr expr2)
   | Var str -> str
 
-let rec fcf cf = 
-  match cf with 
-  | If_Else (cond, expr1, expr2) -> sprintf "If %s then %s else %s" (fexpr cond) (fcf expr1) (fcf expr2)
-  | If (cond, expr) -> sprintf "If %s then %s" (fexpr cond) (fcf expr)
-  | Nop expr -> sprintf "%s" (fexpr expr)
-
 let rec fmap (map : expr_map) : string =
   match map with 
   | Empty -> ""
@@ -30,6 +24,14 @@ let rec fmap (map : expr_map) : string =
 
 let rec fdef ((name, expr) : def) = 
   sprintf "Def %s = %s" name (fexpr expr)
+
+let rec fast ast = 
+  match ast with 
+  | Def d -> fdef d
+  | Elif (cond, ast1, ast2) -> sprintf "If %s then %s else %s" (fexpr cond) (fast ast1) (fast ast2)
+  | If (cond, ast) -> sprintf "If %s then %s" (fexpr cond) (fast ast)
+  | Ret expr -> fexpr expr |> sprintf "Return %s"
+  | Nop -> "Nop"
 
 let print (func : 'a -> string) (obj : 'a) =
   let str = func obj in
