@@ -152,13 +152,16 @@ class parse (tokens : token list) = object (self)
       let ast1 = self#parse_nested_cf ELSE in
         let ast2 = self#parse_nested_cf SEMICOLON in
           let ast = Elif (cond, ast1, ast2) in self#end_err toks endtok ast
+  
+  method parse_ret (endtok : Tokens.t) : ast = 
+    self#shift (); let ast = Ret (self#parse_expr SEMICOLON) in self#end_err toks endtok ast
 
   method parse (endtok : Tokens.t) : ast =
     match toks with
     | (DEF, _) :: _ -> self#parse_def endtok
     | (IF, _) :: _ -> self#parse_if endtok
     | (ELIF, _) :: _ -> self#parse_elif endtok
-    | (RETURN, _) :: _ -> self#shift (); Ret (self#parse_expr endtok)
+    | (RETURN, _) :: _ -> self#parse_ret endtok
     | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
     | [] -> Fatal "Nothing here! Contact maintainers!" |> raise
 

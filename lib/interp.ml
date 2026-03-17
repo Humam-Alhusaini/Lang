@@ -18,12 +18,6 @@ let rec simplify_expr (ctx : expr_map) (expr : expr) : int =
   | Num y -> y
   | Var str -> simplify_expr ctx (find str ctx);;
 
-(*let rec simplify_cf (ctx : expr_map) (cf : cf) : int =
-  match cf with
-  | If_Else (cond, expr1, expr2) -> if simplify_expr ctx cond > 0 then (simplify_cf ctx expr1) else (simplify_cf ctx expr2)
-  | If (cond, expr) -> if simplify_expr ctx cond > 0 then (simplify_cf ctx expr) else 0
-  | Nop expr -> simplify_expr ctx expr
-*)
 let rec simplify_ast (ctx : expr_map) (ast : ast) : ast  =
   match ast with
   | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else Nop
