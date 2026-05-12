@@ -37,10 +37,10 @@ let rec do_stuff (ctx : expr_map) (ast : ast) : expr_map  =
 
 let read str (ctx : expr_map) : expr_map =
   try
-    let lex = new lexer str in
-      let tokens = lex#tokenize [] in 
-        let parse = new parse tokens in
-          let ast = parse#parse EOF in 
+    let lex = Lexer.create str in
+      let tokens = Lexer.tokenize lex [] in
+        let ps = Parser.create tokens in
+          let ast = Parser.parse ps EOF in
             let newctx = do_stuff ctx ast in newctx
   with 
   | Lexing_error (err, toks, pos) -> 

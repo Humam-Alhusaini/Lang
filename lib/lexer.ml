@@ -7,8 +7,8 @@ type cursor = {
 
 type position = {
   line_num : int;
-  bol_off : int; 
-  offset : int; 
+  bol_off : int;
+  offset : int;
 };;
 
 let dummy : position = {
@@ -17,10 +17,10 @@ let dummy : position = {
   offset = 0;
 };;
 
-let curs_to_pos (curs : cursor) : position = 
+let curs_to_pos (curs : cursor) : position =
   {line_num = curs.line_num; bol_off = curs.bol_off; offset = curs.offset};;
 
-let pos_to_curs (pos : position) : cursor = 
+let pos_to_curs (pos : position) : cursor =
   {line_num = pos.line_num; bol_off = pos.bol_off; offset = pos.offset};;
 
 type token =  (Tokens.t * position);;
@@ -30,12 +30,12 @@ exception Lexing_error of string * Tokens.t list * cursor;;
 open Tokens
 open Printf
 
-let string_of_chars chars = 
+let string_of_chars chars =
   let buf = Buffer.create 16 in
   List.iter (Buffer.add_char buf) chars;
   Buffer.contents buf;;
 
-let string_to_tok str : Tokens.t = 
+let string_to_tok str : Tokens.t =
   match str with
   | "if" -> IF
   | "then" -> THEN
@@ -48,60 +48,48 @@ let string_to_tok str : Tokens.t =
   | "return" -> RETURN
   | _ -> VAR str;;
 
-class cursor_tracker txt =
-  object (self)
-    
-    val curs : cursor = {line_num = 1; bol_off = 0; offset = 0}
-    
-    method shiftr () =
-      curs.offset <- curs.offset + 1;
-      curs.bol_off <- curs.bol_off + 1
-   
-    method shiftl () =
-      curs.offset <- curs.offset - 1;
-      curs.bol_off <- curs.bol_off - 1
+type t = {
+  txt : string;
+  curs : cursor;
+};;
 
-    method reset_bol_off () =
-      curs.bol_off <- 0;
-    
-    method new_line () =
-      curs.line_num <- curs.line_num + 1;
-      self#reset_bol_off ();
-      self#shiftr ()
+let create str : t = { txt = str; curs = { line_num = 1; bol_off = 0; offset = 0 } };;
 
-    method current_off = curs.offset
-    method current_line = curs.line_num
-    method current_bol_off = curs.bol_off
+let shiftr (lx : t) =
+  lx.curs.offset <- lx.curs.offset + 1;
+  lx.curs.bol_off <- lx.curs.bol_off + 1;;
 
-    method get_curs = curs
+let shiftl (lx : t) =
+  lx.curs.offset <- lx.curs.offset - 1;
+  lx.curs.bol_off <- lx.curs.bol_off - 1;;
 
-    method at_eof () : bool = curs.offset >= String.length txt
-  end
+let reset_bol_off (lx : t) =
+  lx.curs.bol_off <- 0;;
 
-class lexer (str : string) = object (self)
-  (*The string being lexed*)
-  val txt : string = str
- 
-  val cursor = new cursor_tracker str 
+let new_line (lx : t) =
+  lx.curs.line_num <- lx.curs.line_num + 1;
+  reset_bol_off lx;
+  shiftr lx;;
 
-(*Tokenizes txt*)
-method tokenize (tokens : token list) : token list =
+let at_eof (lx : t) : bool = lx.curs.offset >= String.length lx.txt;;
 
-  let tokenize_next toks = cursor#shiftr (); self#tokenize toks in
+let rec tokenize (lx : t) (tokens : token list) : token list =
 
-  let tokenize_nline toks = cursor#new_line (); self#tokenize toks in
+  let tokenize_next toks = shiftr lx; tokenize lx toks in
+
+  let tokenize_nline toks = new_line lx; tokenize lx toks in
 
   (*This tokenizes numbers, it is initiated when the lexer finds a num*)
   let rec tokenize_num (chars : char list) =
-    cursor#shiftr ();
-    if cursor#at_eof () |> not then begin
-      let char = txt.[cursor#current_off] in
+    shiftr lx;
+    if at_eof lx |> not then begin
+      let char = lx.txt.[lx.curs.offset] in
       match char with
-      | 'a' .. 'z' | 'A' .. 'Z' ->  
+      | 'a' .. 'z' | 'A' .. 'Z' ->
           let (toks, _) = List.split tokens in
-          Lexing_error ("Can't end number with letter, add a space or something", toks, cursor#get_curs) |> raise;
-      | '0' .. '9' -> chars @ [char] |> tokenize_num 
-      | _ -> cursor#shiftl ();
+          Lexing_error ("Can't end number with letter, add a space or something", toks, lx.curs) |> raise;
+      | '0' .. '9' -> chars @ [char] |> tokenize_num
+      | _ -> shiftl lx;
             let final_num = chars |> string_of_chars |> int_of_string in
             let token = NUM final_num in token end
     else
@@ -109,42 +97,42 @@ method tokenize (tokens : token list) : token list =
         let token = NUM final_num in token
           in
 
-  let rec tokenize_word (chars : char list) : Tokens.t = 
-    cursor#shiftr ();
-    if cursor#at_eof () |> not then begin
-      let char = txt.[cursor#current_off] in
+  let rec tokenize_word (chars : char list) : Tokens.t =
+    shiftr lx;
+    if at_eof lx |> not then begin
+      let char = lx.txt.[lx.curs.offset] in
       match char with
       | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> chars @ [char] |> tokenize_word
-      | _ -> cursor#shiftl (); let token = chars |> string_of_chars |> string_to_tok in token end
-    else 
+      | _ -> shiftl lx; let token = chars |> string_of_chars |> string_to_tok in token end
+    else
       let token = chars |> string_of_chars |> string_to_tok in token
           in
 
-  let rec skip_comment () : unit = 
-    cursor#shiftr ();
-    if cursor#at_eof () |> not then begin
-      let char = txt.[cursor#current_off] in
+  let rec skip_comment () : unit =
+    shiftr lx;
+    if at_eof lx |> not then begin
+      let char = lx.txt.[lx.curs.offset] in
       match char with
       | '\\' -> ()
       | _ -> skip_comment ()
     end
-    else 
+    else
     let (toks, _) = List.split tokens in
-      Lexing_error ("Forgot to close comment", toks, cursor#get_curs) |> raise in
+      Lexing_error ("Forgot to close comment", toks, lx.curs) |> raise in
 
-  if cursor#at_eof () |> not then begin
-    let char = txt.[cursor#current_off] in
+  if at_eof lx |> not then begin
+    let char = lx.txt.[lx.curs.offset] in
     match char with
     | ' ' | '\t' | '\r' -> tokenize_next tokens
     | '\n' -> tokenize_nline tokens
     | '\\' -> skip_comment (); tokenize_next tokens
-    | _ -> let pos = cursor#get_curs |> curs_to_pos in
+    | _ -> let pos = lx.curs |> curs_to_pos in
            let t = match char with
                        | 'a' .. 'z' | 'A' .. 'Z' ->  tokenize_word [char]
                        | '0' .. '9' -> tokenize_num [char]
                        | '+' -> PLUS
                        | '*' -> MULT
-                       | '-' -> SUB 
+                       | '-' -> SUB
                        | '=' -> EQ
                        | '(' -> LPAREN
                        | ')' -> RPAREN
@@ -159,10 +147,8 @@ method tokenize (tokens : token list) : token list =
                        | ',' -> COMMA
                        | '.' -> PERIOD
                        | t -> let (toks, _) = List.split tokens in
-                            Lexing_error (sprintf "%c does not match any known char" t, toks, cursor#get_curs) |> raise in
+                            Lexing_error (sprintf "%c does not match any known char" t, toks, lx.curs) |> raise in
                             let token = (t, pos) in
                             tokenize_next (tokens @ [token]) end
   else
-    tokens @ [(EOF, cursor#get_curs |> curs_to_pos)]
-end
-
+    tokens @ [(EOF, lx.curs |> curs_to_pos)]
