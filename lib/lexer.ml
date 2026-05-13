@@ -11,12 +11,6 @@ type position = {
   offset : int;
 };;
 
-let dummy : position = {
-  line_num = 0;
-  bol_off = 0;
-  offset = 0;
-};;
-
 let curs_to_pos (curs : cursor) : position =
   {line_num = curs.line_num; bol_off = curs.bol_off; offset = curs.offset};;
 
